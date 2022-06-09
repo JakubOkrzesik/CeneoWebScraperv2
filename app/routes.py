@@ -1,4 +1,3 @@
-from numpy import extract
 from app import app
 from flask import render_template, redirect, url_for, request
 import os
@@ -9,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-def get_item(ancestor, selector, attribute=None, return_list = None):
+def get_item(ancestor, selector, attribute=None, return_list = False):
     try:
         if return_list:
             return [item.get_text().strip() for item in ancestor.select(selector)]
@@ -24,8 +23,9 @@ selectors = {
     'author' : ['span.user-post__author-name'],
     'recommendation': ['span.user-post__author-recomendation > em'],
     'stars' : ['span.user-post__score-count'],
-    'useful' : ['button.vote-yes'],
-    'useless' : ['button.vote-no'],
+    "content": ["div.user-post__text"],
+    'useful' : ['button.vote-yes > span'],
+    'useless' : ['button.vote-no > span'],
     'publish_date' : ['span.user-post__published > time:nth-child(2)', 'datetime'],
     'purchase_date' : ['span.user-post__published > time:nth-child(2)', 'datetime'],
     'pros' : ['div.review-feature__title--positives ~ div.review-feature__item', None, True],
@@ -37,10 +37,9 @@ selectors = {
 
 
 @app.route('/')
-@app.route('/index')
-@app.route('/index/<name>')
-def index(name="Hello world"):
-    return render_template('index.html.jinja', text=name)
+
+def index():
+    return render_template('index.html.jinja')
 
 
 @app.route('/extract', methods=['POST', 'GET'])
@@ -97,13 +96,15 @@ def about():
 @app.route('/product/<product_id>')
 def product(product_id):
     opinions = pd.read_json(f"app/opinions/{product_id}.json")
-    opinions.stars = opinions.stars.map(lambda x: float(x.split("/")[0].replace(",", ".")))
+    opinions['stars'] = opinions['stars'].map(lambda x: float(x.split("/")[0].replace(",", ".")))
     stats = {
         "opinions_count": len(opinions.index),
-        "pros_count": opinions.pros.map(bool).sum(),
-        "cons_count": opinions.cons.map(bool).sum(),
-        "average_score": opinions.stars.mean().round(2)
+        "pros_count": opinions['pros'].map(bool).sum(),
+        "cons_count": opinions['cons'].map(bool).sum(),
+        "average_score": opinions['stars'].mean().round(2)
     }
+    if not os.path.exists("app/plots"):
+        os.makedirs("app/plots")
     recommendation = opinions.recommendation.value_counts(dropna = False).sort_index().reindex(["Nie polecam", "Polecam", None])
     recommendation.plot.pie(
         label="", 
@@ -115,12 +116,12 @@ def product(product_id):
     plt.savefig(f"app/static/plots/{product_id}_recommendations.png")
     plt.close()
 
-    stars = opinions.stars.value_counts().sort_index().reindex(list(np.arange(0,5.5,0.5)), fill_value=0)
-    stars.plot.bar()
+    stars = opinions['stars'].value_counts().sort_index().reindex(list(np.arange(0,5.5,0.5)), fill_value=0)
+    stars.plot.bar(color = 'pink')
     plt.title("Oceny produktu")
     plt.xlabel("Liczba gwiazdek")
     plt.ylabel("Liczba opinii")
-    plt.grid(True)
+    plt.grid(True, axis='y')
     plt.xticks(rotation=0)
     plt.savefig(f"app/static/plots/{product_id}_stars.png")
     plt.close()

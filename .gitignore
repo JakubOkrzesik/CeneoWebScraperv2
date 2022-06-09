@@ -132,5 +132,5 @@ dmypy.json
 .vscode
 
 # project
-app/opinions/'*'
-app/static/plots/'*'
+app/opinions/
+app/static/plots/
