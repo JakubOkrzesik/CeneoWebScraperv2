@@ -8,6 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+plt.switch_backend('Agg')
+
 def get_item(ancestor, selector, attribute=None, return_list = False):
     try:
         if return_list:
