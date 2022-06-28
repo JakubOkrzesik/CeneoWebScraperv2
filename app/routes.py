@@ -2,11 +2,13 @@ from app import app
 from flask import render_template, redirect, url_for, request
 import os
 from app.models.product import Product
+from app.mdconversion import mdconvert
+
 
 
 @app.route('/')
 def index():
-    return render_template("index.html.jinja")
+    return render_template("index.html.jinja", template = mdconvert())
 
 @app.route('/extract', methods=["POST", "GET"])
 def extract():

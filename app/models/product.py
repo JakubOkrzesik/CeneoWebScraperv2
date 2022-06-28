@@ -126,7 +126,7 @@ class Product:
             product = json.load(jf)
         self.product_id = product["product_id"]
         self.product_name = product["product_name"]
-        self.opinions_count = product["opinions_count"]
+        self.opinions_count = product["opinions_count"][0]
         self.pros_count = product["pros_count"]
         self.cons_count = product["cons_count"]
         self.average_score = product["average_score"]
